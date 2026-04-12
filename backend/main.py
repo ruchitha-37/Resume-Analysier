@@ -1,4 +1,5 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import shutil
@@ -20,9 +21,9 @@ app.add_middleware(
 # Note: In a production app, use Redis/Postgres. For simplicity, we use memory.
 db_store = {}
 
-@app.get("/")
-def read_root():
-    return {"status": "Backend is running"}
+# We mount the frontend dir at the root so it serves the index.html and static files.
+# Mount correctly at the end of routing to avoid overriding endpoints, but wait, FastAPI 
+# checks routes in order. Actually, let's just comment out the get("/") and we'll add mount at the end.
 
 @app.post("/upload/")
 async def upload_resume(file: UploadFile = File(...)):
@@ -99,3 +100,7 @@ async def score(request: JobDescriptionRequest):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Scoring failed: {str(e)}")
+
+# Mount frontend at the root last so it acts as a fallback for index.html
+app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
+
