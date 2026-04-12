@@ -1,0 +1,100 @@
+import os
+from dotenv import load_dotenv
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import FAISS
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import SystemMessage, HumanMessage
+
+# Load env variables (for OPENROUTER_API_KEY)
+load_dotenv()
+
+# Initialize embeddings globally to reuse
+embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+
+def get_llm():
+    api_key = os.getenv("OPENROUTER_API_KEY")
+    if not api_key or api_key == "your_openrouter_api_key_here":
+        raise ValueError("OPENROUTER_API_KEY is not set correctly in .env")
+        
+    return ChatOpenAI(
+        openai_api_base="https://openrouter.ai/api/v1",
+        openai_api_key=api_key,
+        model_name="openai/gpt-3.5-turbo", # You can change this to a free open source model from openrouter if needed e.g. "mistralai/mistral-7b-instruct:free"
+        temperature=0.3
+    )
+
+def process_resume(file_path):
+    """Parses PDF, splits text, creates and returns vector DB."""
+    loader = PyPDFLoader(file_path)
+    docs = loader.load()
+
+    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+    chunks = splitter.split_documents(docs)
+
+    db = FAISS.from_documents(chunks, embeddings)
+    return db
+
+def analyze_resume(db, query):
+    """Standard QA against the resume."""
+    retriever = db.as_retriever()
+    relevant_docs = retriever.invoke(query)
+    
+    docs_text = "\n\n".join([doc.page_content for doc in relevant_docs])
+
+    llm = get_llm()
+    messages = [
+        SystemMessage(content="You are a helpful AI assistant analyzing a resume."),
+        HumanMessage(content=f"Resume Context:\n{docs_text}\n\nQuestion: {query}")
+    ]
+    
+    response = llm.invoke(messages)
+    return response.content
+
+def analyze_against_job_description(db, job_description):
+    """
+    Returns a score (0-100), skill gap analysis, and improvement tips 
+    based on comparing the resume against a job description.
+    """
+    # Simply returning top chunks might not cover the whole resume for a holistic match,
+    # but for this RAG scope, we can pull the top 10 chunks to get most of the resume.
+    retriever = db.as_retriever(search_kwargs={"k": 10})
+    
+    # We query using the job description to find the most relevant parts of the resume
+    relevant_docs = retriever.invoke(job_description)
+    docs_text = "\n\n".join([doc.page_content for doc in relevant_docs])
+    
+    prompt = f"""
+    You are an expert technical recruiter and ATS (Applicant Tracking System).
+    Please analyze the following resume context against the provided job description.
+    
+    Job Description:
+    {job_description}
+    
+    Resume Context:
+    {docs_text}
+    
+    Provide your analysis strictly in the following format:
+    
+    SCORE: [Your score from 0-100]
+    
+    MISSING_SKILLS: 
+    - [Skill 1]
+    - [Skill 2]
+    
+    IMPROVEMENTS:
+    - [Actionable tip 1]
+    - [Actionable tip 2]
+    
+    Avoid any other commentary.
+    """
+    
+    llm = get_llm()
+    messages = [
+        SystemMessage(content="You are an expert ATS and recruiter."),
+        HumanMessage(content=prompt)
+    ]
+    
+    response = llm.invoke(messages)
+    return response.content

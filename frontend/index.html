@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aura | Intelligent Resume Analyzer</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Include font-awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+</head>
+<body>
+
+  <!-- Floating animated background elements -->
+  <div class="blob top-left"></div>
+  <div class="blob bottom-right"></div>
+
+  <div class="container">
+    <header>
+      <h1>Aura <span>Resume AI</span></h1>
+      <p>Elevate your potential with deep insights and scoring.</p>
+    </header>
+
+    <div class="card glass">
+      <div class="upload-section">
+        <label for="fileInput" class="upload-label">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <span id="fileName">Select PDF Resume</span>
+        </label>
+        <input type="file" id="fileInput" accept=".pdf" />
+        <button id="uploadBtn" onclick="uploadReady()">Initialize Resume</button>
+        <div id="uploadStatus" class="status-msg"></div>
+      </div>
+    </div>
+
+    <!-- Tab navigation for features -->
+    <div class="tabs glass" id="tabs" style="display: none;">
+      <button class="tab-btn active" onclick="switchTab('qaTab')">General Q&A</button>
+      <button class="tab-btn" onclick="switchTab('jdTab')">Job Matching</button>
+    </div>
+
+    <!-- General QA Tab -->
+    <div id="qaTab" class="tab-content active-tab" style="display: none;">
+      <div class="card glass">
+        <h3>Ask Aura</h3>
+        <textarea id="query" placeholder="e.g. What are my core strengths? What experience do I have with Python?"></textarea>
+        <button class="primary-btn" onclick="analyzeQA()">Analyze Context</button>
+        <div class="loader" id="qaLoader"></div>
+        <div id="qaResult" class="result-box"></div>
+      </div>
+    </div>
+
+    <!-- Job Match Tab -->
+    <div id="jdTab" class="tab-content" style="display:none;">
+      <div class="card glass">
+        <h3>Job Description Alignment</h3>
+        <textarea id="jobDesc" placeholder="Paste the Job Description here to get Score, missing skills, and improvement tips..."></textarea>
+        <button class="primary-btn" onclick="analyzeJD()">Compute Alignment Score</button>
+        <div class="loader" id="jdLoader"></div>
+        
+        <div id="jdDashboard" class="dashboard hidden">
+          <div class="score-circle">
+            <svg viewBox="0 0 36 36" class="circular-chart">
+              <path class="circle-bg"
+                d="M18 2.0845
+                  a 15.9155 15.9155 0 0 1 0 31.831
+                  a 15.9155 15.9155 0 0 1 0 -31.831"
+              />
+              <path class="circle"
+                stroke-dasharray="0, 100"
+                id="scorePath"
+                d="M18 2.0845
+                  a 15.9155 15.9155 0 0 1 0 31.831
+                  a 15.9155 15.9155 0 0 1 0 -31.831"
+              />
+              <text x="18" y="20.35" class="percentage" id="scoreText">0</text>
+            </svg>
+            <div class="score-label">Match Score</div>
+          </div>
+          
+          <div class="analysis-grid">
+            <div class="grid-card">
+              <h4><i class="fa-solid fa-triangle-exclamation"></i> Missing Skills</h4>
+              <div id="missingSkillsResult"></div>
+            </div>
+            <div class="grid-card">
+              <h4><i class="fa-solid fa-wand-magic-sparkles"></i> Recommendations</h4>
+              <div id="improvementsResult"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
