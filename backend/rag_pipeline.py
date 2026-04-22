@@ -21,13 +21,19 @@ def get_embeddings():
 def get_llm():
     api_key = os.getenv("OPENROUTER_API_KEY")
     if not api_key or api_key == "your_openrouter_api_key_here":
-        raise ValueError("OPENROUTER_API_KEY is not set correctly in .env")
+        raise ValueError("OPENROUTER_API_KEY is not set correctly in environment variables")
         
     return ChatOpenAI(
         base_url="https://openrouter.ai/api/v1",
         api_key=api_key,
-        model="google/gemma-3-4b-it:free",  # Free model on OpenRouter
-        temperature=0.3
+        model="mistralai/mistral-7b-instruct:free",  # More stable free model on OpenRouter
+        temperature=0.3,
+        timeout=60,         # Prevent hanging requests on Render
+        max_retries=2,
+        default_headers={
+            "HTTP-Referer": "https://resume-analyzer.onrender.com",
+            "X-Title": "Resume Analyzer"
+        }
     )
 
 def process_resume(file_path):
@@ -54,6 +60,8 @@ def analyze_resume(db, query):
     ]
     
     response = llm.invoke(messages)
+    if not response.content or response.content.strip() == "":
+        raise ValueError("LLM returned an empty response. The model may be rate-limited or unavailable. Please try again.")
     return response.content
 
 def analyze_against_job_description(db, job_description):
@@ -100,4 +108,6 @@ def analyze_against_job_description(db, job_description):
     ]
     
     response = llm.invoke(messages)
+    if not response.content or response.content.strip() == "":
+        raise ValueError("LLM returned an empty response. The model may be rate-limited or unavailable. Please try again.")
     return response.content
