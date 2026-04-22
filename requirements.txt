@@ -1,10 +1,3 @@
---extra-index-url https://download.pytorch.org/whl/cpu
-
-# Explicitly request CPU torch before other packages
-torch
-torchvision
-torchaudio
-
 # Core web framework
 fastapi
 uvicorn[standard]
@@ -17,7 +10,6 @@ langchain-community
 langchain-core
 langchain-openai
 langchain-text-splitters
-langchain-huggingface
 
 # PDF parsing
 pypdf
@@ -25,8 +17,8 @@ pypdf
 # Vector store
 faiss-cpu
 
-# Embeddings model
-sentence-transformers
-
 # HTTP client (needed by openai/langchain)
 httpx
+
+# Numpy (required by faiss-cpu)
+numpy
