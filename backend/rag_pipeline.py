@@ -19,9 +19,9 @@ def get_llm():
         raise ValueError("OPENROUTER_API_KEY is not set correctly in .env")
         
     return ChatOpenAI(
-        openai_api_base="https://openrouter.ai/api/v1",
-        openai_api_key=api_key,
-        model_name="openai/gpt-3.5-turbo", # You can change this to a free open source model from openrouter if needed e.g. "mistralai/mistral-7b-instruct:free"
+        base_url="https://openrouter.ai/api/v1",
+        api_key=api_key,
+        model="google/gemma-3-4b-it:free",  # Free model on OpenRouter
         temperature=0.3
     )
 
@@ -45,8 +45,7 @@ def analyze_resume(db, query):
 
     llm = get_llm()
     messages = [
-        SystemMessage(content="You are a helpful AI assistant analyzing a resume."),
-        HumanMessage(content=f"Resume Context:\n{docs_text}\n\nQuestion: {query}")
+        HumanMessage(content=f"System Instruction: You are a helpful AI assistant analyzing a resume.\n\nResume Context:\n{docs_text}\n\nQuestion: {query}")
     ]
     
     response = llm.invoke(messages)
@@ -92,8 +91,7 @@ def analyze_against_job_description(db, job_description):
     
     llm = get_llm()
     messages = [
-        SystemMessage(content="You are an expert ATS and recruiter."),
-        HumanMessage(content=prompt)
+        HumanMessage(content=f"System Instruction: You are an expert ATS and recruiter.\n\n{prompt}")
     ]
     
     response = llm.invoke(messages)

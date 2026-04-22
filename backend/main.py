@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import shutil
 import os
-from rag_pipeline import process_resume, analyze_resume, analyze_against_job_description
+from backend.rag_pipeline import process_resume, analyze_resume, analyze_against_job_description
 
 app = FastAPI(title="Resume Analyzer API")
 
