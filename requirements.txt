@@ -23,6 +23,5 @@ httpx
 # Numpy (required by faiss-cpu)
 numpy
 
-# Local embeddings (no API key required)
-sentence-transformers
-langchain-huggingface
+# Local embeddings (lightweight to fit in Render 512MB limit)
+fastembed
