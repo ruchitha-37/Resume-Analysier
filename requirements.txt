@@ -22,3 +22,7 @@ httpx
 
 # Numpy (required by faiss-cpu)
 numpy
+
+# Local embeddings (no API key required)
+sentence-transformers
+langchain-huggingface

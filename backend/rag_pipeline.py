@@ -3,18 +3,16 @@ from dotenv import load_dotenv
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage
 
 # Load env variables (for OPENROUTER_API_KEY)
 load_dotenv()
 
-# Use HuggingFace Inference API for embeddings — no local model, zero RAM cost
+# Use local sentence-transformers — runs on Render, no API key needed
 def get_embeddings():
-    hf_token = os.getenv("HF_TOKEN", "")  # Optional: speeds up rate limits
-    return HuggingFaceInferenceAPIEmbeddings(
-        api_key=hf_token if hf_token else "hf_dummy",
+    return HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
 
