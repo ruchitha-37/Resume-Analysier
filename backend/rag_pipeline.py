@@ -3,35 +3,32 @@ from dotenv import load_dotenv
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import SystemMessage, HumanMessage
 
 # Load env variables (for OPENROUTER_API_KEY)
 load_dotenv()
 
-# Use local sentence-transformers — runs on Render, no API key needed
+# We will lazy-load embeddings to prevent Render startup timeouts
+_embeddings = None
+
 def get_embeddings():
-    return HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
-    )
+    global _embeddings
+    if _embeddings is None:
+        _embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+    return _embeddings
 
 def get_llm():
     api_key = os.getenv("OPENROUTER_API_KEY")
-    if not api_key or api_key == "your_openrouter_api_key_here":
-        raise ValueError("OPENROUTER_API_KEY is not set correctly in environment variables")
+    if not api_key or not api_key.strip():
+        raise ValueError("OPENROUTER_API_KEY is not set in .env")
         
     return ChatOpenAI(
         base_url="https://openrouter.ai/api/v1",
         api_key=api_key,
-        model="mistralai/mistral-7b-instruct:free",  # More stable free model on OpenRouter
-        temperature=0.3,
-        timeout=60,         # Prevent hanging requests on Render
-        max_retries=2,
-        default_headers={
-            "HTTP-Referer": "https://resume-analyzer.onrender.com",
-            "X-Title": "Resume Analyzer"
-        }
+        model="google/gemma-3-4b-it:free",  # Free model on OpenRouter
+        temperature=0.3
     )
 
 def process_resume(file_path):
@@ -58,8 +55,6 @@ def analyze_resume(db, query):
     ]
     
     response = llm.invoke(messages)
-    if not response.content or response.content.strip() == "":
-        raise ValueError("LLM returned an empty response. The model may be rate-limited or unavailable. Please try again.")
     return response.content
 
 def analyze_against_job_description(db, job_description):
@@ -106,6 +101,4 @@ def analyze_against_job_description(db, job_description):
     ]
     
     response = llm.invoke(messages)
-    if not response.content or response.content.strip() == "":
-        raise ValueError("LLM returned an empty response. The model may be rate-limited or unavailable. Please try again.")
     return response.content
