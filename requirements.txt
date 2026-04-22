@@ -1,3 +1,10 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+# Explicitly request CPU torch before other packages
+torch
+torchvision
+torchaudio
+
 # Core web framework
 fastapi
 uvicorn[standard]
