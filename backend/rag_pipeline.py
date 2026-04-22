@@ -10,8 +10,14 @@ from langchain_core.messages import SystemMessage, HumanMessage
 # Load env variables (for OPENROUTER_API_KEY)
 load_dotenv()
 
-# Initialize embeddings globally to reuse
-embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+# We will lazy-load embeddings to prevent Render startup timeouts
+_embeddings = None
+
+def get_embeddings():
+    global _embeddings
+    if _embeddings is None:
+        _embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+    return _embeddings
 
 def get_llm():
     api_key = os.getenv("OPENROUTER_API_KEY")
@@ -33,7 +39,7 @@ def process_resume(file_path):
     splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     chunks = splitter.split_documents(docs)
 
-    db = FAISS.from_documents(chunks, embeddings)
+    db = FAISS.from_documents(chunks, get_embeddings())
     return db
 
 def analyze_resume(db, query):
